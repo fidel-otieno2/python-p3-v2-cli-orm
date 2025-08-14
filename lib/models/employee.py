@@ -3,60 +3,72 @@ from models.__init__ import CURSOR, CONN
 from models.department import Department
 
 
-class Employee:
+class Employee(object):
 
     # Dictionary of objects saved to the database.
     all = {}
 
     def __init__(self, name, job_title, department_id, id=None):
         self.id = id
-        self.name = name
-        self.job_title = job_title
-        self.department_id = department_id
+        self._set_name(name)
+        self._set_job_title(job_title)
+        self._set_department_id(department_id)
 
     def __repr__(self):
         return (
-            f"<Employee {self.id}: {self.name}, {self.job_title}, " +
-            f"Department ID: {self.department_id}>"
+            "<Employee {}: {}, {}, Department ID: {}>".format(
+                self.id, self.name, self.job_title, self.department_id)
         )
 
-    @property
-    def name(self):
+    def _get_name(self):
         return self._name
-
-    @name.setter
-    def name(self, name):
-        if isinstance(name, str) and len(name):
+    
+    def _set_name(self, name):
+        try:
+            # Python 2/3 compatibility
+            string_types = basestring
+        except NameError:
+            string_types = str
+        
+        if isinstance(name, string_types) and len(name):
             self._name = name
         else:
             raise ValueError(
                 "Name must be a non-empty string"
             )
+    
+    name = property(_get_name, _set_name)
 
-    @property
-    def job_title(self):
+    def _get_job_title(self):
         return self._job_title
-
-    @job_title.setter
-    def job_title(self, job_title):
-        if isinstance(job_title, str) and len(job_title):
+    
+    def _set_job_title(self, job_title):
+        try:
+            # Python 2/3 compatibility
+            string_types = basestring
+        except NameError:
+            string_types = str
+        
+        if isinstance(job_title, string_types) and len(job_title):
             self._job_title = job_title
         else:
             raise ValueError(
                 "job_title must be a non-empty string"
             )
+    
+    job_title = property(_get_job_title, _set_job_title)
 
-    @property
-    def department_id(self):
+    def _get_department_id(self):
         return self._department_id
-
-    @department_id.setter
-    def department_id(self, department_id):
+    
+    def _set_department_id(self, department_id):
         if type(department_id) is int and Department.find_by_id(department_id):
             self._department_id = department_id
         else:
             raise ValueError(
                 "department_id must reference a department in the database")
+    
+    department_id = property(_get_department_id, _set_department_id)
 
     @classmethod
     def create_table(cls):
@@ -94,7 +106,7 @@ class Employee:
         CONN.commit()
 
         self.id = CURSOR.lastrowid
-        type(self).all[self.id] = self
+        self.__class__.all[self.id] = self
 
     def update(self):
         """Update the table row corresponding to the current Employee instance."""
@@ -120,7 +132,7 @@ class Employee:
         CONN.commit()
 
         # Delete the dictionary entry using id as the key
-        del type(self).all[self.id]
+        del self.__class__.all[self.id]
 
         # Set the id to None
         self.id = None

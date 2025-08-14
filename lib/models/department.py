@@ -2,44 +2,56 @@
 from models.__init__ import CURSOR, CONN
 
 
-class Department:
+class Department(object):
 
     # Dictionary of objects saved to the database.
     all = {}
 
     def __init__(self, name, location, id=None):
         self.id = id
-        self.name = name
-        self.location = location
+        self._set_name(name)
+        self._set_location(location)
 
     def __repr__(self):
-        return f"<Department {self.id}: {self.name}, {self.location}>"
+        return "<Department {}: {}, {}>".format(self.id, self.name, self.location)
 
-    @property
-    def name(self):
+    def _get_name(self):
         return self._name
-
-    @name.setter
-    def name(self, name):
-        if isinstance(name, str) and len(name):
+    
+    def _set_name(self, name):
+        try:
+            # Python 2/3 compatibility
+            string_types = basestring
+        except NameError:
+            string_types = str
+        
+        if isinstance(name, string_types) and len(name):
             self._name = name
         else:
             raise ValueError(
-                "Name must be a non-empty string"
+                "Name cannot be empty and must be a string"
             )
+    
+    name = property(_get_name, _set_name)
 
-    @property
-    def location(self):
+    def _get_location(self):
         return self._location
-
-    @location.setter
-    def location(self, location):
-        if isinstance(location, str) and len(location):
+    
+    def _set_location(self, location):
+        try:
+            # Python 2/3 compatibility
+            string_types = basestring
+        except NameError:
+            string_types = str
+        
+        if isinstance(location, string_types) and len(location):
             self._location = location
         else:
             raise ValueError(
                 "Location must be a non-empty string"
             )
+    
+    location = property(_get_location, _set_location)
 
     @classmethod
     def create_table(cls):
@@ -75,7 +87,7 @@ class Department:
         CONN.commit()
 
         self.id = CURSOR.lastrowid
-        type(self).all[self.id] = self
+        self.__class__.all[self.id] = self
 
     @classmethod
     def create(cls, name, location):
@@ -107,7 +119,7 @@ class Department:
         CONN.commit()
 
         # Delete the dictionary entry using id as the key
-        del type(self).all[self.id]
+        del self.__class__.all[self.id]
 
         # Set the id to None
         self.id = None
